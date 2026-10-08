@@ -62,8 +62,8 @@ def train(
         mlflow.log_metric("accuracy", acc)
         mlflow.sklearn.log_model(
             sk_model=model,
-            name="model",
-            skops_trusted_types=["sklearn.tree._tree.Tree"]
+            artifact_path="model",
+            serialization_format="cloudpickle",
         )
 
         # TODO 7: In ket qua ra man hinh
