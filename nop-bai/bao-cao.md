@@ -45,9 +45,9 @@ Tập dữ liệu Adult mang đặc trưng mất cân bằng lớp rõ rệt khi
 | | f1_score | accuracy |
 |---|---|---|
 | Bước 2 (chỉ `train_batch1`) | 0.7149 | 0.8740 |
-| Bước 3 (thêm `train_batch2`) | ___ | ___ |
+| Bước 3 (thêm `train_batch2`) | 0.7354 | 0.8820 |
 
-**Nhận xét:** Khi bổ sung thêm dữ liệu `train_batch2`, chỉ số F1 và Accuracy có thể chỉ biến động nhẹ do hai tập dữ liệu được lấy mẫu ngẫu nhiên từ cùng một phân phối gốc và mô hình đã bão hòa tri thức từ 22.361 mẫu đầu tiên. Điều cốt lõi mà Bước 3 chứng minh thành công là tính tự động hóa khép kín của pipeline MLOps: hệ thống tự động kích hoạt huấn luyện lại và kiểm định chất lượng ngay khi phát hiện thay đổi dữ liệu từ commit DVC.
+**Nhận xét:** Khi bổ sung thêm dữ liệu `train_batch2` (tăng quy mô từ 22.361 lên 44.722 mẫu), hiệu năng mô hình cải thiện tích cực với F1-score tăng từ 0.7149 lên 0.7354 và Accuracy tăng từ 0.8740 lên 0.8820. Dữ liệu bổ sung giúp mô hình nhận diện tốt hơn các mẫu thiểu số, đồng thời minh chứng tính tự động hóa khép kín hoàn hảo của pipeline MLOps: hệ thống tự động kích hoạt huấn luyện lại, vượt qua Quality Gate và triển khai mô hình mới lên VM ngay khi có commit DVC mà không cần bất kỳ can thiệp thủ công nào.
 
 ---
 
