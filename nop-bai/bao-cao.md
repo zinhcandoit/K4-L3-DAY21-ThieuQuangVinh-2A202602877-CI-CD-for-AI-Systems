@@ -6,7 +6,7 @@
 | MSSV | 2A202602877 |
 | Lớp / Khóa | K4 |
 | Repo GitHub | https://github.com/zinhcandoit/K4-L3-DAY21-ThieuQuangVinh-2A202602877-CI-CD-for-AI-Systems |
-| Ngày nộp | 07/10/2026 |
+| Ngày nộp | 08/10/2026 |
 
 ---
 
@@ -18,15 +18,15 @@
 | 2 | 50 | 0.05 | 2 | 0.6051 | 0.8460 |
 | 3 | 200 | 0.1 | 5 | 0.7149 | 0.8740 |
 
-**Bộ siêu tham số đã chọn:** `n_estimators=200`, `learning_rate=0.1`, `max_depth=5`.
+**Bộ tham số đã chọn:** `n_estimators=200`, `learning_rate=0.1`, `max_depth=5`.
 
-**Lý do:** Bộ siêu tham số ở lần chạy thứ 3 được lựa chọn vì đạt điểm F1-score cao nhất (0.7149), vượt qua ngưỡng chất lượng yêu cầu (>= 0.65) và tối ưu hóa khả năng dự đoán lớp thiểu số. Điều đáng chú ý là lần chạy có accuracy cao nhất lại là lần 1 (0.8780) chứ không phải lần 3 (0.8740). Sự sai lệch này minh chứng rằng accuracy phản ánh chủ yếu độ chính xác của lớp đa số, trong khi F1-score đánh giá sự hài hòa thực sự giữa precision và recall trên lớp mục tiêu. Giữa `n_estimators` và `learning_rate` tồn tại mối quan hệ đánh đổi chặt chẽ: khi giảm `learning_rate` xuống 0.05 và chỉ dùng 50 cây ở lần 2, mô hình bị underfitting nghiêm trọng khiến F1 giảm mạnh xuống 0.6051. Do đó, việc duy trì `learning_rate=0.1` đồng thời tăng số cây lên 200 và độ sâu lên 5 cho phép mô hình tích lũy đủ các bộ phân loại yếu để bắt trọn các đặc trưng phi tuyến tính phức tạp.
+**Lý do:** Lần 3 đạt F1 cao nhất (0.7149), vượt ngưỡng chất lượng (>= 0.65). Ta ưu tiên lần 3 vì F1 cân bằng tốt giữa Precision và Recall trên lớp thiểu số, dù lần 1 có Accuracy cao hơn (0.8780). Về trade-off: giảm learning rate xuống 0.05 và 50 cây khiến mô hình underfitting (F1 tụt còn 0.6051). Tăng lên 200 cây và độ sâu 5 giúp bắt trọn quan hệ phi tuyến phức tạp.
 
 ---
 
-## 2. Vì Sao Ngưỡng Chất Lượng Đặt Trên F1 Chứ Không Phải Accuracy
+## 2. Vì Sao Quality Gate Đặt Trên F1 Thay Vì Accuracy
 
-Tập dữ liệu Adult mang đặc trưng mất cân bằng lớp rõ rệt khi lớp dương (thu nhập > 50K) chỉ chiếm khoảng 24.8%, trong khi lớp âm (thu nhập <= 50K) chiếm tới 75.2%. Nếu một mô hình ngây thơ luôn dự đoán nhãn là thu nhập thấp cho mọi trường hợp, độ chính xác (accuracy) của nó vẫn đạt tới 75.2% trên toàn bộ tập dữ liệu và thậm chí đạt gần 87% trên tập holdout, tạo ra ảo tưởng về một mô hình có hiệu năng cao nhưng thực tế lại hoàn toàn vô dụng. Ngược lại, chỉ số F1 của lớp dương là trung bình điều hòa giữa Precision và Recall, đo lường chính xác năng lực phát hiện đúng các cá nhân có thu nhập cao mà không bị áp đảo bởi số lượng lớn của lớp âm. Hơn nữa, ta tuyệt đối không sử dụng average="weighted" hay average="macro" khi tính F1 vì trọng số của lớp đa số sẽ kéo điểm số lên cao giả tạo, làm mất đi tính nghiêm ngặt của ngưỡng kiểm định chất lượng (Quality Gate) trong pipeline CI/CD.
+Tập Adult mất cân bằng lớp: lớp dương chiếm 24.8%, lớp âm chiếm 75.2%. Nếu mô hình đoán toàn bộ là âm, Accuracy vẫn đạt 75.2% nhưng hoàn toàn vô dụng. F1 lớp dương là trung bình điều hòa giữa Precision và Recall, phản ánh chính xác năng lực phát hiện người thu nhập cao mà không bị lớp đa số lấn át. Tránh dùng `average="weighted"` vì trọng số lớp đa số sẽ thổi phồng chỉ số giả tạo.
 
 ---
 
@@ -34,27 +34,27 @@ Tập dữ liệu Adult mang đặc trưng mất cân bằng lớp rõ rệt khi
 
 | Khó khăn | Nguyên nhân | Cách giải quyết |
 |---|---|---|
-| Lỗi `ModuleNotFoundError: No module named 'pkg_resources'` khi chạy train | Phiên bản `setuptools>=82` trên Python 3.12 đã gỡ bỏ hoàn toàn module `pkg_resources` mà thư viện MLflow cần dùng | Hạ phiên bản `setuptools<82` hoặc nâng cấp MLflow lên phiên bản mới không còn phụ thuộc `pkg_resources` |
-| Lỗi `ImportError` liên quan đến `FallbackAsyncAdaptedQueuePool` trong MLflow | Phiên bản MLflow cũ gọi import lớp kết nối không tồn tại trong cấu trúc thư viện SQLAlchemy hiện hành | Nâng cấp đồng bộ gói thư viện `mlflow` và `sqlalchemy` lên phiên bản tương thích mới nhất |
-| Lỗi `UntrustedTypesFoundException` do `sklearn.tree._tree.Tree` bị chặn khi log model | MLflow mặc định sử dụng `skops` để serialize model nhằm ngăn chặn rủi ro bảo mật từ pickle và chặn kiểu cây | Thêm tham số `skops_trusted_types=["sklearn.tree._tree.Tree"]` vào lời gọi hàm `mlflow.sklearn.log_model` |
+| Push workflow bị chặn | Token thiếu quyền `workflow` | Tạo PAT mới có chọn quyền `workflow` |
+| CI chạy `dvc pull` lỗi 401 | Thiếu `sa-key.json` ở root trên runner | Ghi secret ra `sa-key.json` tại root của runner CI |
+| API lỗi khi tải model trên VM | VM cài `scikit-learn 1.7.2` lệch bản 1.4.2 | Cố định `scikit-learn==1.4.2` trên VM đồng bộ với CI |
 
 ---
 
-## 4. So Sánh Bước 2 và Bước 3 (bắt buộc, 2 - 3 câu)
+## 4. So Sánh Bước 2 và Bước 3
 
 | | f1_score | accuracy |
 |---|---|---|
 | Bước 2 (chỉ `train_batch1`) | 0.7149 | 0.8740 |
 | Bước 3 (thêm `train_batch2`) | 0.7354 | 0.8820 |
 
-**Nhận xét:** Khi bổ sung thêm dữ liệu `train_batch2` (tăng quy mô từ 22.361 lên 44.722 mẫu), hiệu năng mô hình cải thiện tích cực với F1-score tăng từ 0.7149 lên 0.7354 và Accuracy tăng từ 0.8740 lên 0.8820. Dữ liệu bổ sung giúp mô hình nhận diện tốt hơn các mẫu thiểu số, đồng thời minh chứng tính tự động hóa khép kín hoàn hảo của pipeline MLOps: hệ thống tự động kích hoạt huấn luyện lại, vượt qua Quality Gate và triển khai mô hình mới lên VM ngay khi có commit DVC mà không cần bất kỳ can thiệp thủ công nào.
+**Nhận xét:** Khi tăng mẫu từ 22.361 lên 44.722, F1 tăng từ 0.7149 lên 0.7354 và Accuracy tăng từ 0.8740 lên 0.8820. Thêm dữ liệu giúp mô hình khái quát tốt hơn các mẫu thiểu số. Pipeline CI/CD tự động huấn luyện lại và release thành công khi có commit DVC mới mà không cần thao tác thủ công.
 
 ---
 
-## 5. Phần Bonus Đã Thực Hiện (nếu có)
+## 5. Phần Bonus Đã Thực Hiện
 
-- [ ] Bonus 1 - Tracking MLflow từ xa với DagsHub: ___
-- [ ] Bonus 2 - Điều chỉnh ngưỡng quyết định: ___
-- [ ] Bonus 3 - Báo cáo precision / recall tự động: ___
-- [ ] Bonus 4 - Hoàn trả về phiên bản trước: ___
-- [ ] Bonus 5 - Cảnh báo lệch lạc dữ liệu: ___
+- [x] Bonus 1 - Tracking MLflow DagsHub: Kết nối tracking URI đến server DagsHub của repo (`https://dagshub.com/zinhcandoit/...`).
+- [x] Bonus 2 - Điều chỉnh ngưỡng quyết định: Quét ngưỡng 0.1-0.9, ngưỡng tối ưu 0.30 giúp F1 đạt 0.7537 (tăng từ 0.7354).
+- [x] Bonus 3 - Báo cáo Precision / Recall: Tự động xuất Confusion Matrix và Classification Report ra `outputs/detail.txt` vào Artifacts.
+- [x] Bonus 4 - Rollback an toàn: So sánh F1 trong Quality Gate, hủy Release nếu F1 mới thấp hơn model đang chạy trên GCS.
+- [x] Bonus 5 - Cảnh báo Data Drift: Kiểm tra tỷ lệ lớp dương (24.78%), cảnh báo nếu lệch quá 5% so với mốc 24.80%.
